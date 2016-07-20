@@ -32,8 +32,9 @@ This implementation is based on the following publications:
 
 import numpy as np
 import scipy
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import assert_all_finite
+from sklearn.utils.validation import NotFittedError
 
 __all__ = [
     "SRM",
@@ -83,7 +84,7 @@ def _init_w_transforms(data, features):
     return w, voxels
 
 
-class SRM(BaseEstimator):
+class SRM(BaseEstimator, TransformerMixin):
     """Probabilistic Shared Response Model (SRM)
 
     Given multi-subject data, factorize it as a shared response S among all
@@ -148,6 +149,35 @@ class SRM(BaseEstimator):
         self.rand_seed = rand_seed
         self.verbose = verbose
         return
+
+    def transform(self, X, y=None):
+        """transform data from Shared Response Model
+
+        Parameters
+        ----------
+        X : list of 2D arrays, element i has shape=[voxels_i, samples_i]
+            Each element in the list contains the fMRI data of one subject.
+
+        y : not used
+
+        Returns
+        -------
+        s : list of 2D array, element i has shape=[k, samples_i]
+            shared response from the input data
+        """
+        # Check the number of subjects
+        if not hasattr(self, "w_"):
+            raise NotFittedError("Model has not been fit".format(len(X)))
+
+        # Check the number of subjects
+        if len(X) != len(self.w_):
+            raise ValueError("There are not the same number of subjects "
+                             "({0:d}) to train the model.".format(len(X)))
+
+        s = [None] * len(X)
+        for subject in range(len(X)):
+            s[subject] = self.w_[subject].T.dot(X[subject])
+        return s
 
     def fit(self, X, y=None):
         """Compute the probabilistic Shared Response Model

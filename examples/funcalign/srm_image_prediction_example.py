@@ -73,9 +73,9 @@ for subject in range(subjects):
     image_data[subject] = stats.zscore(image_data[subject],axis=1,ddof=1)
 
 # Transform the data to the shared response subspace
-image_data_shared = [None] * subjects
+image_data_shared = srm.transform(image_data)
+
 for subject in range(subjects):
-    image_data_shared[subject] = srm.w_[subject].T.dot(image_data[subject])
     image_data_shared[subject] = stats.zscore(image_data_shared[subject], axis=1, ddof=1)
 
 # Read the labels of the image data for training the classifier.

@@ -11,6 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from sklearn.utils.validation import NotFittedError
+
+
 def test_can_instantiate():
     import brainiak.funcalign.srm
     s = brainiak.funcalign.srm.SRM()
@@ -43,6 +46,13 @@ def test_can_instantiate():
     W.append(Q)
     X.append(Q.dot(S) + 0.1*np.random.random((voxels, samples)))
 
+    # Check to see if model exists
+    try:
+        s.transform(X)
+        assert True, "Success running transform with one subject!"
+    except NotFittedError:
+        print("Catched Exception: running with fit model")
+
     # Check that does NOT run with 1 subject
     try:
         s.fit(X)
@@ -67,6 +77,12 @@ def test_can_instantiate():
         assert s.w_[subject].shape[1] == features, "Invalid computation of SRM! (wrong # features in W)"
     assert s.s_.shape[0] == features, "Invalid computation of SRM! (wrong # features in S)"
     assert s.s_.shape[1] == samples, "Invalid computation of SRM! (wrong # samples in S)"
+
+    try:
+        s.transform([X[0]])
+        assert True, "Model has been transformed for wrong number of subjects."
+    except ValueError:
+        print("Catched the exception, running on right number.")
 
     # Check that it does not run without enough samples (TRs).
     try:
